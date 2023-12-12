@@ -4,7 +4,7 @@
 # email      : didi4goooogle@gmail.com
 # Description: 方案2 Env实现
 
-from generate_world import generate
+from autogeneration import generate
 
 
 class Environment:
@@ -19,20 +19,15 @@ class Environment:
         """
         pass
 
-    def generate(self):
-        """
-        基于输入的Idea，生成一个适配的Group群体与Agent群体
-        需要调用外部函数
-        """
-        generate()
-        pass
-
     def publish(self):
         """
         发布公开信息，考虑一下什么类型的Group能够接收到
         """
         pass
 
+    def timestep(self):
+        pass
+    
     def save(self):
         """
         保存当前环境中各个Group的状态

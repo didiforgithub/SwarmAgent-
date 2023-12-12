@@ -159,6 +159,11 @@ class Group:
 
 class BaseGroup:
     def __init__(self):
+        self.group_memory = []
+        self.member_list = []
+        """
+        这里需要具体想清楚Group的共有属性
+        """
         pass
 
     def run(self):
