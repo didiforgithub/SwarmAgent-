@@ -158,9 +158,10 @@ class Group:
 
 
 class BaseGroup:
-    def __init__(self):
+    def __init__(self, group_name: str, agent_list: List[Agent]):
+        self.name = group_name
+        self.members = agent_list
         self.group_memory = []
-        self.member_list = []
         """
         这里需要具体想清楚Group的共有属性
         """
