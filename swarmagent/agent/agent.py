@@ -18,8 +18,11 @@ class Agent:
         self.name = name           # 姓名
         self.profile = None        # 个人详细信息
         self.opinions = None       # LIST[Dict]，存储对某件事的观点
-        self.base_node = None      # 没有Plan时的位置
-        self.nodes = None          # LIST[Dict]，存储所有的Node,包括Discussion Group
+
+        self.curr_node = None      # 当前所在的Node
+        self.base_node = None      # 没有Plan时的Node
+        self.nodes = None          # Agent归属的所有Node
+
         self.memory = None         # Agent Memory
         self.current_plan = None   # 当前的计划
 

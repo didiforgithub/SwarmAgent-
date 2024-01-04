@@ -10,3 +10,7 @@ class DiscussionGroup(BaseGroup):
 
     def run(self):
         pass
+
+    def consensus(self):
+        # TODO 生成共识
+        return "hello world"

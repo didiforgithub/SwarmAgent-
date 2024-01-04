@@ -101,16 +101,16 @@ class Environment:
         # TODO 3 模拟完成后，返回一个所有 Group 的共识
         return self.final_consensus()
 
-
-    def publish(self):
+    def publish(self, current_time_step: str ) -> None:
         """
         发布公开信息，考虑一下什么类型的Group能够接收到
         """
-        pass
+        for group in self.discussion_groups:
+            self.publish_message.append(group.consensus())
 
-    def forward(self, current_time_step: str):
+    def forward(self, current_time_step: str) -> None:
         # TODO 补充具体的模拟逻辑
-        pass
+        self.publish(current_time_step)
 
     def final_consensus(self):
         # TODO 返回所有Group的最终共识列表
@@ -127,5 +127,5 @@ class Environment:
         加载JSON文件
         """
         # TODO 加载 JSON 文件，完成所有 Group 与 Agent 的初始化
-        
+
         pass

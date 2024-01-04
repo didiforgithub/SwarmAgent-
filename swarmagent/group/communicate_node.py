@@ -10,3 +10,7 @@ class CommunicateNode(BaseGroup):
 
     def run(self):
         pass
+
+    def communicate(self):
+        # TODO 在Communicate里面进行交流，获取信息
+        pass
