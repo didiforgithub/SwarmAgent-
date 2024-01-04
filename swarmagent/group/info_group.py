@@ -4,8 +4,8 @@ from ..agent.singleagent import Agent
 
 
 class InfoGroup(BaseGroup):
-    def __init__(self, name: str, agent_list: List[Agent]):
-        super().__init__(name, agent_list)
+    def __init__(self, name: str, description: str, agent_list: List[Agent]):
+        super().__init__(name, description, agent_list)
         pass
 
     def run(self):

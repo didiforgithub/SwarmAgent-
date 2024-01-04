@@ -158,8 +158,9 @@ class Group:
 
 
 class BaseGroup:
-    def __init__(self, group_name: str, agent_list: List[Agent]):
+    def __init__(self, group_name: str, description: str, agent_list: List[Agent]):
         self.name = group_name
+        self.description = description
         self.members = agent_list
         self.group_memory = []
         """

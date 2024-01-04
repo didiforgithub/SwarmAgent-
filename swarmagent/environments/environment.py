@@ -32,6 +32,7 @@ class Environment:
     def _init_simulation(self):
         # 这里就是原来的自动生成模块
         # TODO 1. 基于Simulation Topic 生成决策组信息
+
         # TODO 2. 基于Simulation Topic, agent_counts 与决策组信息 生成带有各种关系的Agent
         # TODO 3. 基于前置信息生成 Info 组，启动自动化的Simulation
 
