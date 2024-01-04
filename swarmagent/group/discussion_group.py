@@ -1,9 +1,9 @@
 from group import BaseGroup
 from typing import List
-from ..agent.singleagent import Agent
+from ..agent.agent import Agent
 
 
-class DecisionGroup(BaseGroup):
+class DiscussionGroup(BaseGroup):
     def __init__(self, name: str, description: str, agent_list: List[Agent]):
         super().__init__(name, description, agent_list)
         pass

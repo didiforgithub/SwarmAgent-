@@ -15,9 +15,14 @@ class Agent:
         """
         使用 name 区分 Agent，信息统一从 Storage 中读取出来
         """
-        self.name = name
-        self.memory = None
-        self.profile = None
+        self.name = name           # 姓名
+        self.profile = None        # 个人详细信息
+        self.opinions = None       # LIST[Dict]，存储对某件事的观点
+        self.base_node = None      # 没有Plan时的位置
+        self.nodes = None          # LIST[Dict]，存储所有的Node,包括Discussion Group
+        self.memory = None         # Agent Memory
+        self.current_plan = None   # 当前的计划
+
         self.load()
         pass
 
@@ -39,9 +44,15 @@ class Agent:
         """
         pass
 
-    def plan(self):
+    def daily_plan(self):
         """
-        Agent 进行日常规划与临时规划
+        Agent 进行日常规划
+        """
+        pass
+
+    def temp_plan(self):
+        """
+        Agent 进行临时规划
         """
         pass
 

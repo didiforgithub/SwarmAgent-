@@ -3,14 +3,9 @@
 # Author     : Jiayi Zhang
 # email      : didi4goooogle@gmail.com
 # Description: Minimum demo
-import openai
-import os
+
 import swarmagent.agent.singleagent as singleagent
 import swarmagent.group.group as group
-
-openai.api_key = os.getenv("OPENAI_KEY")
-openai.api_base = "https://sapi.onechat.fun/v1"
-
 """
 1. Prompt 调整 —— 开场白作为单独的一个Action执行，需要包含所有角色的信息
 2. Prompt 调整 —— 角色背景强调差异与观点
