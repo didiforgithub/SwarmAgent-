@@ -8,9 +8,20 @@ from typing import List
 from ..group.discussion_group import DiscussionGroup
 from ..group.communicate_node import CommunicateNode
 
+class SwarmAgent:
+    """
+    生成模块
+    - TODO 1 当前 Decision Group 需要包含所有的 Agent ，之后有更合适的结构可以换一下
+    - TODO 2 这里 的生成方式可以是全自动配置，半自动配置，手动配置
 
-# TODO 1 当前 Decision Group 需要包含所有的 Agent ，之后有更合适的结构可以换一下
-# TODO 2 这里 的生成方式可以是全自动配置，半自动配置，手动配置
+    Group形成与消失
+    1. 新的一天开始的时候基于 Agent 关系形成或消失掉 Info Group
+    2. 新的一天会决定是否会从现在的Decision Group 退出，加入新的Group
+    # TODO 如何处理这个形成与消失关系，不然等到v0.3再解决这个问题，先跑一天的
+    """
+    def __init__(self):
+        pass
+
 
 class Environment:
 
@@ -105,16 +116,48 @@ class Environment:
         """
         发布公开信息，考虑一下什么类型的Group能够接收到
         """
+        current_publish_message = {
+            "time-step":current_time_step,
+            "message":{}
+        }
         for group in self.discussion_groups:
-            self.publish_message.append(group.consensus())
+            current_publish_message["content"][group.name] = group.consensus()
 
     def forward(self, current_time_step: str) -> None:
-        # TODO 补充具体的模拟逻辑
+        # TODO 在新一天开始（不包括第一天）的时候，判断是否需要
+        """
+        随时间步的模拟
+        0. 依据Agent 的空间关系，刷新Group当前时间步的Agentlist
+        1. Discussion Group 遍历操作
+        - 判断 Discussion Group 人数，在这个时间段没人自动跳过
+        - 所有 Discussion Group 接受 Publish Message，判断几个问题
+            - 是否维持原有的Core Agent
+            - 由该轮次的Core Agent 决定是否讨论，如果讨论，围绕什么话题进行讨论
+        - 讨论启动
+            - TODO Config 对每个时间步里面开启讨论的Group行动轮次进行配置
+            - TODO 进行复杂的Action循环，怎么组织其中Agent的决策Action是个问题
+        - 讨论结束
+            - TODO 这里的操作总结为Agent的一个行为就可以，想个好听的名字
+            - Agent 对这一轮讨论进行信息总结
+            - Agent 判断是否会改变自己对某事件的观点
+            - TODO Agent 判断是否会改变自己对某个人的关系
+            - Agent 判断是否会改变自己的Plan
+        - 修改 Agent 空间关系
+        2. Info Group 遍历操作
+        -
+        3. Publish Message 获取公众环境
+        """
+        self.refresh_group(current_time_step)
+        # T
         self.publish(current_time_step)
 
     def final_consensus(self):
         # TODO 返回所有Group的最终共识列表
         return self.publish_message[-1]
+
+    def refresh_group(self,current_time_step:str):
+        # 思考一下
+        pass
     
     def save(self):
         """
@@ -127,5 +170,5 @@ class Environment:
         加载JSON文件
         """
         # TODO 加载 JSON 文件，完成所有 Group 与 Agent 的初始化
-
+        # 1. 如果是空文件夹，完成所有JSON文件的文件创建
         pass

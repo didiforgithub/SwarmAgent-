@@ -161,8 +161,10 @@ class BaseGroup:
     def __init__(self, group_name: str, description: str, agent_list: List[Agent], curr_agents: List[Agent] = None):
         self.name = group_name
         self.description = description
-        self.members = agent_list
+
         self.group_memory = []
+
+        self.members = agent_list
         self.current_agents = curr_agents
 
         """
