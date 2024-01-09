@@ -4,9 +4,11 @@
 # email      : didi4goooogle@gmail.com
 # Description: 方案2 Env实现
 import os
-from typing import List
+from typing import List, Dict
+from ..agent.agent import Agent
 from ..group.discussion_group import DiscussionGroup
 from ..group.communicate_node import CommunicateNode
+
 
 class SwarmAgent:
     """
@@ -19,6 +21,7 @@ class SwarmAgent:
     2. 新的一天会决定是否会从现在的Decision Group 退出，加入新的Group
     # TODO 如何处理这个形成与消失关系，不然等到v0.3再解决这个问题，先跑一天的
     """
+
     def __init__(self):
         pass
 
@@ -26,25 +29,30 @@ class SwarmAgent:
 class Environment:
 
     def __init__(self, name: str, simulation_topic: str, decision_group_counts=2, agent_counts=10, auto_generate=True):
+        # TODO 添加超参数，用于控制群体模拟效果，如设置信息茧房实验
         if agent_counts < decision_group_counts:
             raise Exception("Agent counts should be larger than decision group counts")
         self.name = name
         self.simulation_topic = simulation_topic
 
         self.decision_group_counts = decision_group_counts
-        self.discussion_groups = []
-        self.communicate_nodes = []
+        self.discussion_groups: List[DiscussionGroup] = []
+        self.communicate_nodes: List[CommunicateNode] = []
 
         self.agent_counts = agent_counts
-        self.agent_list = []
+        self.agent_list: List[Agent] = []
 
-        self.publish_message = []            # List[Dict] 里面装的是每一时间步下，不同Discussion Group的共识输出
+        self.publish_message: List[Dict] = []  # List[Dict] 里面装的是每一时间步下，不同Discussion Group的共识输出
 
         self.storage_path = os.path.join("../storage/", self.name)
         self.step_list = None
         self.auto_generate = auto_generate
         if self.auto_generate:
             self._init_simulation()
+
+    @property
+    def groups(self):
+        return self.discussion_groups + self.communicate_nodes
 
     def _init_simulation(self):
         # 这里就是原来的自动生成模块
@@ -75,9 +83,9 @@ class Environment:
             raise Exception("Agent counts should be equal to the counts you set")
         if len(discussion_groups) != self.decision_group_counts:
             raise Exception("Decision Group counts should be equal to the counts you set")
-        for decision_group in discussion_groups:
-            self.discussion_groups.append(decision_group)
-            self.agent_list += decision_group.members
+        for discussion_group in discussion_groups:
+            self.discussion_groups.append(discussion_group)
+            self.agent_list += discussion_group.members
 
     def add_communicate_node(self, communicate_nodes: List[CommunicateNode]) -> None:
 
@@ -92,7 +100,6 @@ class Environment:
                     raise Exception(f"Member {member} of Communicate Node {node.name} is not in the Agent List")
         self.communicate_nodes = communicate_nodes
 
-
     def run(self, days: int):
         """
         根据输入的时间轮数，遍历环境中的Group，判断是否展开Group的讨论行为
@@ -104,24 +111,29 @@ class Environment:
         # 分支1 如果为空，在Load里面进行Plan等自动化生成
         # 分支2 如果存在，直接加载，继续模拟
         self.load()
-        # TODO 2 基于时间步，执行 Step() 方法
+        # TODO 2 基于时间步，执行 Step() 方法； 没有考虑断点的问题
         # 这里是生成一个列表，给定days，生成days*6个时间步
-        self.step_list = [f'{i+1}-{j+1}' for i in range(days) for j in range(6)]
+        self.step_list = [f'{i + 1}-{j + 1}' for i in range(days) for j in range(6)]
         for step in self.step_list:
             self.forward(step)
         # TODO 3 模拟完成后，返回一个所有 Group 的共识
-        return self.final_consensus()
+        return self.publish_message[-1]
 
-    def publish(self, current_time_step: str ) -> None:
+    def publish(self, current_time_step: str, current_discussion_group: List[DiscussionGroup] = None) -> None:
         """
-        发布公开信息，考虑一下什么类型的Group能够接收到
+        发布公开信息
         """
         current_publish_message = {
-            "time-step":current_time_step,
-            "message":{}
+            "time-step": current_time_step,
+            "message": {}
         }
-        for group in self.discussion_groups:
-            current_publish_message["content"][group.name] = group.consensus()
+        if current_discussion_group is None:
+            return None
+        else:
+            for group in current_discussion_group:
+                current_publish_message["message"][group.name] = group.get_consensus(current_time_step)
+                # TODO Publish Message 要不要修改成字典啊
+            self.publish_message.append(current_publish_message)
 
     def forward(self, current_time_step: str) -> None:
         # TODO 在新一天开始（不包括第一天）的时候，判断是否需要
@@ -130,35 +142,44 @@ class Environment:
         0. 依据Agent 的空间关系，刷新Group当前时间步的Agentlist
         1. Discussion Group 遍历操作
         - 判断 Discussion Group 人数，在这个时间段没人自动跳过
-        - 所有 Discussion Group 接受 Publish Message，判断几个问题
-            - 是否维持原有的Core Agent
-            - 由该轮次的Core Agent 决定是否讨论，如果讨论，围绕什么话题进行讨论
-        - 讨论启动
-            - TODO Config 对每个时间步里面开启讨论的Group行动轮次进行配置
-            - TODO 进行复杂的Action循环，怎么组织其中Agent的决策Action是个问题
-        - 讨论结束
-            - TODO 这里的操作总结为Agent的一个行为就可以，想个好听的名字
-            - Agent 对这一轮讨论进行信息总结
-            - Agent 判断是否会改变自己对某事件的观点
-            - TODO Agent 判断是否会改变自己对某个人的关系
-            - Agent 判断是否会改变自己的Plan
-        - 修改 Agent 空间关系
+        - 所有 Discussion Group 接受 Publish Message，
+        - Discussion Group Run
         2. Info Group 遍历操作
         -
-        3. Publish Message 获取公众环境
+        3. 发布公开信息
         """
+        # 0. 依据 Agent 的空间关系，刷新 Group 当前时间步的 Agentlist
         self.refresh_group(current_time_step)
-        # T
+        # 1. Discussion Group 遍历操作
+        # TODO 这里的操作出现了不健壮性，当Discussion没有的时候怎么办
+        #   - 判断 Discussion Group 人数，在这个时间段没人自动跳过
+        current_discussion_groups = [discussion for discussion in self.discussion_groups if len(discussion.current_agents) >0]
+        #   - 提供Public Message
+        last_message = self.publish_message[-1]
+        for current_discussion_group in current_discussion_groups:
+            # TODO 在Discussion Group中补充Group的run方法
+            current_discussion_group.run(current_time_step, last_message)
+        # 2. Info Group 遍历操作
+        current_communicate_nodes = [info for info in self.communicate_nodes if len(info.current_agents) > 0]
+        for current_communicate_node in current_communicate_nodes:
+            # TODO 在Communicate Node 中补充Group的run方法
+            current_communicate_node.run()
+        # 3. 发布公开信息
         self.publish(current_time_step)
 
-    def final_consensus(self):
-        # TODO 返回所有Group的最终共识列表
-        return self.publish_message[-1]
 
-    def refresh_group(self,current_time_step:str):
-        # 思考一下
-        pass
-    
+    def refresh_group(self, current_time_step: str) -> None:
+        # TODO 对于固定的时间步，应该按照Base Node进行安置，这里之后再进行修改
+        # 刷新当前Group中的Current Agents
+        for group in self.groups:
+            group.current_agents = []
+        # 刷新当前Agent的Curr Node，修改归属
+        for agent in self.agent_list:
+            agent_curr_node = agent.curr_node
+            for group in self.groups:
+                if agent_curr_node == group.name:
+                    group.current_agents.append(agent)
+
     def save(self):
         """
         保存当前环境中各个Group的状态
@@ -166,9 +187,12 @@ class Environment:
         pass
 
     def load(self):
-        """
-        加载JSON文件
-        """
-        # TODO 加载 JSON 文件，完成所有 Group 与 Agent 的初始化
+        '''
+        加载 JSON 文件，初始化environment与Group信息
+        '''
         # 1. 如果是空文件夹，完成所有JSON文件的文件创建
+        if not os.path.exists(self.storage_path):
+            os.makedirs(self.storage_path)
+            # TODO 创建所有的JSON文件
+        # 2. 如果不是空文件夹，读取所有的JSON文件
         pass

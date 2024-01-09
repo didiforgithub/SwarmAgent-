@@ -6,8 +6,6 @@
 
 
 from memory import Memory
-from agentprofile import Profile
-
 
 class Agent:
 
@@ -15,18 +13,19 @@ class Agent:
         """
         使用 name 区分 Agent，信息统一从 Storage 中读取出来
         """
+        # 基本信息
         self.name = name                # 姓名
         self.profile = None             # 个人详细信息
 
-
+        # 空间关系
         self.curr_node = None           # 当前所在的Node
         self.base_node = None           # 没有Plan时的Node
         self.nodes = None               # Agent归属的所有Node
 
-        # TODO 这里记忆的组织关系没有想好，我感觉是要重新开一个记忆类来做这个事情
-        self.memory = None              # Agent Memory
-        self.opinion_memory = None      # LIST[Dict]，存储对某件事的观点
-        self.relation_memory = None     # LIST[DICT] 存储与某个人的关系
+        # 记忆
+        self.memory: Memory             # Agent Memory
+
+        # 计划
         self.current_plan = None        # 当前的计划
 
         self.load()
@@ -79,7 +78,6 @@ class Agent:
         Agent Memory & Profile Load
         """
         self.memory = Memory(self.name)
-        self.profile = Profile(self.profile)
 
     def save(self):
         """

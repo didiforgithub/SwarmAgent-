@@ -4,6 +4,8 @@
 # email      : didi4goooogle@gmail.com
 # Description: Agent's memory architecture
 
+from typing import Dict
+
 
 class Memory:
     """
@@ -11,32 +13,58 @@ class Memory:
     Agent 的短期记忆直接放在Group环境记忆之中
     """
 
-    def __init__(self, name):
+    def __init__(self, storage_path: str, summaries={}, opinions={}, relationships={}, conversation_history={}):
+        """
+        summaries: {
+            ‘time-step’: {
+                'group info': '',
+                'content': ''
+            },
+        }
+
+        opinions: {
+            'event name':{
+                'opinion': ''
+                'reason':''
+            }
+        }
+
+        relationships: {
+            'agent name': {
+                ‘relationship’: '',
+                'closeness':''
+            }
+        }
+        """
+        self.summaries: Dict = summaries
+        self.opinions: Dict = opinions  # LIST[Dict]，存储对某件事的观点
+        self.relationships: Dict = relationships  # LIST[DICT] 存储与某个人的关系
+        self.conversation_history: Dict = conversation_history
+        self.storage_path = storage_path
+
+    def add_summaries(self, content):
         pass
 
-    def load(self):
-        """
-        使用 name 作为唯一 ID 加载 memory
-        """
-        pass
 
-    def save(self):
-        """
-        Save Memory
-        """
+    def retrieve(self):
+        '''
+        针对summaries与opinions的记忆检索，较低概率出现失忆事件
+        '''
         pass
 
     def recollect(self, content):
         """
-        引入 recollection 机制，针对某个事件进行回忆检索
+        针对conversation_history的记忆检索，较高概率出现失忆事件
+        失忆事件触发
         """
         pass
 
-    def summary(self):
+    def summary(self, chat_snippet:[]):
         """
-        引入Summary机制，对最近发生的事情进行总结，并Step-back 提取高层次的观点
+        引入Summary机制，针对近期发生的事件进行总结，随后添加到summaries中
         """
-        pass
+        result = chat_snippet
+        self.add_summaries(result)
 
     def criticize(self):
         """
