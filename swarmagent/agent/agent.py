@@ -6,7 +6,7 @@
 
 
 from memory import Memory
-
+from ..engine.llm_engine import OpenAILLM
 class Agent:
 
     def __init__(self, name: str):
@@ -27,19 +27,24 @@ class Agent:
 
         # 计划
         self.current_plan = None        # 当前的计划
+        self.llm = OpenAILLM()
 
         self.load()
         pass
 
-    def perceive(self):
+    def task_react(self, task_prompt: str, json_mode=False):
+        agent_prompt = f"""
+        You are identified as {self.name}. 
+        Your profile description is '{self.profile}'. 
+        Always bear in mind, your distinct personality, interpersonal relationships, and perspectives on various matters greatly influence your thought process and decision making.
         """
-        Agent 感知信息的方法
-        """
-        pass
+        final_prompt = agent_prompt + task_prompt
+        return self.llm.get_response(final_prompt, json_mode=json_mode)
 
-    def react(self):
+    def initiative_react(self):
         """
-        Agent 接受信息后做出反应
+        Agent 在Group中 主动进行 Function Calling 的过程
+        可能的任务：总结信息，发起讨论，
         """
         pass
 

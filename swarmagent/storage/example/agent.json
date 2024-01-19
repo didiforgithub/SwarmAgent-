@@ -1,0 +1,24 @@
+{
+  "name": "姓名",
+  "profile": "对人物的简单描述，如职业，身份（归属于哪一个主体），性别，性格",
+  "memory": {
+    "opinions": {
+      "event_name":{
+        "opinion": "对事件的看法",
+        "reason": "对此事件看法的原因/凭证"
+      }
+    },
+    "relationships": {
+      "nameA": {
+        "relationship": "关系",
+        "description": "关系的具体描述与对此人的认知",
+        "closeness": "关系亲密度(不用给出具体值，由框架这边生成)"
+      },
+      "nameB": {
+            "relationship": "关系",
+            "description": "关系的具体描述与对此人的认知",
+            "closeness": "关系亲密度(不用给出具体值，由框架这边生成)"
+      }
+    }
+  }
+}

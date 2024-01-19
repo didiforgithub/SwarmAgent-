@@ -131,7 +131,7 @@ class Environment:
             return None
         else:
             for group in current_discussion_group:
-                current_publish_message["message"][group.name] = group.get_consensus(current_time_step)
+                current_publish_message["message"][group.name] = group.consensus_result[current_time_step]
                 # TODO Publish Message 要不要修改成字典啊
             self.publish_message.append(current_publish_message)
 

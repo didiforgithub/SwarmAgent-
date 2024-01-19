@@ -15,7 +15,7 @@ import os
 # TODO OPENAI 修改Client 需要做出同步修改
 
 class OpenAILLM:
-    def __init__(self, model="gpt-3.5-turbo-1106", temperature=0.7, timeout=60):
+    def __init__(self, model="gpt-3.5-turbo-16k", temperature=0.7, timeout=60):
 
         self.model = model
         self.temperature = temperature
@@ -25,7 +25,7 @@ class OpenAILLM:
         self.async_client = AsyncClient(api_key=os.environ.get("OPENAI_API_KEY"),
                                         base_url=os.environ.get("BASE_URL"))
 
-    def get_response(self, prompt: str, json_mode=False, max_tokens=1500, retries=5):
+    def get_response(self, prompt: str, json_mode=False, max_tokens=4000, retries=5):
         print(f"current prompt :{prompt}")
         print(f"current json mode: {json_mode}")
         """
@@ -55,7 +55,7 @@ class OpenAILLM:
             except Exception as e:
                 print(f"{__name__} occurs: {e}")
 
-    async def async_get_response(self, prompt: str, json_mode=False, max_tokens=1500, retries=5):
+    async def async_get_response(self, prompt: str, json_mode=False, max_tokens=4000, retries=5):
         print(f"current prompt :{prompt}")
         print(f"current json mode: {json_mode}")
         """

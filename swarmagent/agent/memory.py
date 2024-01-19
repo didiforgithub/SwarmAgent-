@@ -32,6 +32,7 @@ class Memory:
         relationships: {
             'agent name': {
                 ‘relationship’: '',
+                ‘description’:'',
                 'closeness':''
             }
         }
