@@ -17,6 +17,7 @@ class OpenAIEmbedding:
         self.embedding_path = os.path.join(self.save_path, f"{self.name}.json")
         os.makedirs(self.embedding_path, exist_ok=True)
 
+    # 现在相当于把所有的 embedding 结果都放在一个JSON里面
     def get_embeddings(self, query):
         with open(self.embedding_path, "r") as f:
             data = json.load(f)

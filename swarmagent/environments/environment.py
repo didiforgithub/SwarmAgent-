@@ -28,7 +28,7 @@ class SwarmAgent:
 
 class Environment:
 
-    def __init__(self, name: str, simulation_topic: str, decision_group_counts=2, agent_counts=10, auto_generate=True):
+    def __init__(self, name: str, simulation_topic: str, decision_group_counts=2, agent_counts=10, day_rounds=6, auto_generate=True):
         # TODO 添加超参数，用于控制群体模拟效果，如设置信息茧房实验
         if agent_counts < decision_group_counts:
             raise Exception("Agent counts should be larger than decision group counts")
@@ -45,6 +45,7 @@ class Environment:
         self.publish_message: List[Dict] = []  # List[Dict] 里面装的是每一时间步下，不同Discussion Group的共识输出
 
         self.storage_path = os.path.join("../storage/", self.name)
+        self.day_rounds = day_rounds
         self.step_list = None
         self.auto_generate = auto_generate
         if self.auto_generate:
@@ -113,7 +114,7 @@ class Environment:
         self.load()
         # TODO 2 基于时间步，执行 Step() 方法； 没有考虑断点的问题
         # 这里是生成一个列表，给定days，生成days*6个时间步
-        self.step_list = [f'{i + 1}-{j + 1}' for i in range(days) for j in range(6)]
+        self.step_list = [f'{i + 1}-{j + 1}' for i in range(days) for j in range(self.day_rounds)]
         for step in self.step_list:
             self.forward(step)
         # TODO 3 模拟完成后，返回一个所有 Group 的共识
@@ -167,7 +168,6 @@ class Environment:
         # 3. 发布公开信息
         self.publish(current_time_step)
 
-
     def refresh_group(self, current_time_step: str) -> None:
         # TODO 对于固定的时间步，应该按照Base Node进行安置，这里之后再进行修改
         # 刷新当前Group中的Current Agents
@@ -187,9 +187,9 @@ class Environment:
         pass
 
     def load(self):
-        '''
+        """
         加载 JSON 文件，初始化environment与Group信息
-        '''
+        """
         # 1. 如果是空文件夹，完成所有JSON文件的文件创建
         if not os.path.exists(self.storage_path):
             os.makedirs(self.storage_path)

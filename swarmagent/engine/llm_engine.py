@@ -10,9 +10,8 @@ from openai import AsyncClient
 import time
 import json
 import os
+from functools import cache
 
-
-# TODO OPENAI 修改Client 需要做出同步修改
 
 class OpenAILLM:
     def __init__(self, model="gpt-3.5-turbo-16k", temperature=0.7, timeout=60):
@@ -84,6 +83,16 @@ class OpenAILLM:
                 print("Rate limit retry")
             except Exception as e:
                 print(f"{__name__} occurs: {e}")
+
+    @cache
+    def get_embeddings(self, query):
+        response = self.client.embeddings.create(
+            input=query,
+            model="text-embedding-ada-002"
+        )
+        embeddings = response['data'][0]['embedding']
+        return embeddings
+
 
 def prompt_load(file_path):
     try:

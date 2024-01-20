@@ -57,15 +57,17 @@ class DiscussionGroup(BaseGroup):
         """
         典型无序合作方式，所有Agent获取其他人的信息，随后进行统一整合发言
         """
-        current_rounds_history = []
+        current_discussion_history = []
         round_history = {}
         # 采用 LLMchat 中的无序合作模式，使得每一个人获取所有信息，最后形成一个共识
         for single_round in range(discuss_rounds):
             temp_history = {}
             for single_agent in self.current_agents:
-                temp_history[single_agent.name] = single_agent.initiative_react(discuss_topic, round_history)
+                # TODO 修改这个地方 Single Agent 的 react 模式为 Task react
+                # discuss_topic, round_history
+                temp_history[single_agent.name] = single_agent.task_react()
             round_history = temp_history
-            current_rounds_history.append(round_history)
+            current_discussion_history.append(round_history)
         # 利用 Core Agent 形成共识,形成后添加到集合当中去
         current_consensus = self.consensus(discuss_topic, round_history)
         self.consensus_result[current_time_step] = current_consensus
@@ -92,26 +94,45 @@ class DiscussionGroup(BaseGroup):
         pass
 
     def consensus(self, discuss_topic, discussion_history):
-        # 1.20 TODO
-        #       1. 构建 针对 opinion，relation，memory 的 retrieve
-        #       2. 构建refresh agent prompt
-        #       3. 构建 JSON Load & Save 方法，先做 Load 再做 Save
+        """
+        让 Core Agent 形成该群体的共识
+        TODO Version 0.1 之后需要迭代更好的版本，找论文（群体共识是如何形成的）进行理论支撑
+        """
+        relevant_opinion_list = self.core_agent.recollect(query=discuss_topic, retrieve_type="opinion", retrieve_count=3)
+        relevant_opinion_list = [op for op in relevant_opinion_list if op["relevance"] > 0.6]
+        if len(relevant_opinion_list) == 0:
+            relevant_opinions = f"In reference to {discuss_topic}, I held no pre-existing opinions."
+        else:
+            relevant_opinions = f"In reference to {discuss_topic}, I held {len(relevant_opinion_list)} related pre-existing opinions. '\n'"
+            for opinion in relevant_opinion_list:
+                relevant_opinions += f"Regarding {opinion['event_name']}, my position is {opinion['opinion']}. '\n'"
 
-        relevant_opinions = "与世无争"
-        relevant_relation = "与世无争"
+        relevant_relations = ""
+        for other_agent in self.current_agents:
+            relevant_relation = self.core_agent.relationship_with_others(other_agent.name)
+            if relevant_relation is None:
+                relevant_relations += f"I have yet to establish any contact with {other_agent.name} in the past. '\n'"
+            else:
+                relevant_relations += f"My relationship with {other_agent.name} can be characterized as {relevant_relation['relationship']}, the details of which include {relevant_relation['description']}. On a comprehensive intimacy scale that peaks at 10, our level of closeness stands at {relevant_relation['closeness']}.'\n'"
+
         consensus_prompt = f"""
         Within a team, you, in collaboration with {self.current_agents}, are engaging in discussions regarding {discuss_topic}. 
         Your stance is encapsulated in {relevant_opinions}.
-        The dynamics of your relations with the rest of the team members are defined by {relevant_relation}. 
+        The dynamics of your relations with the rest of the team members are defined by {relevant_relations}. 
         The record tracing the team discussion from its inception to conclusion is defined as {discussion_history}. 
         Please distill the consensus reached during the discussion and highlight the point that aligns most closely with your thoughts on {discuss_topic}. If no such consensus is found, respond with "None".
         Please express it in JSON format, specifically as such:
         {
-        "consensus": ""
+            "consensus": ""
         }
         """
         return self.core_agent.task_react(consensus_prompt, json_mode=True)["consensus"]
 
 # TODO 下一步工作，完善react代码，思考一个合适的Prompt让人类做出反应
-# 目的是查找一下，Agent如何面对一个情况做出反应，需要涉及到怎样的一个心理机制
+
+# 1.20 TODO
+#       1. 构建 针对 opinion，relation，memory 的 retrieve
+#       2. 构建 refresh agent prompt
+#       3. 构建 JSON Load & Save 方法，先做 Load 再做 Save
+
 # 参考 Camel Role Play 代码 + Humanoid Agent代码
