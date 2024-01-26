@@ -1,21 +1,62 @@
-from group import BaseGroup
+import json
+import os
+from .group import BaseGroup
 from typing import List, Dict
 from ..agent.agent import Agent
 
 
 class DiscussionGroup(BaseGroup):
-    def __init__(self, name: str, description: str, agent_list: List[Agent], curr_agent: List[Agent] = None):
+    def __init__(self, name: str, agent_list: List[Agent], storage_path: str, description: str = '',
+                 curr_agent: List[Agent] = []):
         """
         self.name = group_name
         self.description = description
         self.group_memory = []
         self.members = agent_list          # Group 成员
         self.current_agents = curr_agents  # Group 当前时间步上的成员
+        self.storage_path = os.path.join(storage_path,self.name)
         """
-        super().__init__(name, description, agent_list, curr_agent)
+        super().__init__(group_name=name, agent_list=agent_list, description=description, storage_path=storage_path,
+                         curr_agents=curr_agent)
         self.core_agent: Agent = None
         self.topic_list = []
         self.consensus_result = {}
+        self.load()
+
+    def load(self):
+        with open(self.storage_path + f"/{self.name}.json") as dis_file:
+            dis_dict = json.load(dis_file)
+
+            self.name = dis_dict["name"]
+            self.description = dis_dict["description"]
+            self.group_memory = dis_dict.get("group_memory", [])
+            self.current_agents = dis_dict.get("current_agents", [])
+            # 没有Load Self.members
+            self.topic_list = dis_dict.get("topic_list", [])
+            self.consensus_result = dis_dict.get("consensus_result", {})
+            self.core_agent = dis_dict.get("core_agent", "")
+            if self.core_agent != '':
+                for agent in self.members:
+                    if agent.name == self.core_agent:
+                        self.core_agent = agent
+
+    def save(self):
+        # 创建输出字典
+        dis_dict = {
+            "name": self.name,
+            "description": self.description,
+            "group_memory": self.group_memory,
+            "current_agents": self.current_agents,
+            "topic_list": self.topic_list,
+            "consensus_result": self.consensus_result,
+            "core_agent": self.core_agent.name if self.core_agent is not None else ''
+        }
+        # 确保存储路径存在
+        if not os.path.exists(self.storage_path):
+            os.makedirs(self.storage_path)
+        # 保存字典为json文件
+        with open(self.storage_path + f"/{self.name}.json", 'w') as f:
+            json.dump(dis_dict, f)
 
     def run(self, current_time_step, public_message_dict: Dict, discuss_rounds=3):
         # discuss_round 指代的是一个Agent发言的轮数
@@ -98,15 +139,18 @@ class DiscussionGroup(BaseGroup):
         让 Core Agent 形成该群体的共识
         TODO Version 0.1 之后需要迭代更好的版本，找论文（群体共识是如何形成的）进行理论支撑
         """
-        relevant_opinion_list = self.core_agent.recollect(query=discuss_topic, retrieve_type="opinion", retrieve_count=3)
-        relevant_opinion_list = [op for op in relevant_opinion_list if op["relevance"] > 0.6]
-        if len(relevant_opinion_list) == 0:
-            relevant_opinions = f"In reference to {discuss_topic}, I held no pre-existing opinions."
-        else:
-            relevant_opinions = f"In reference to {discuss_topic}, I held {len(relevant_opinion_list)} related pre-existing opinions. '\n'"
-            for opinion in relevant_opinion_list:
-                relevant_opinions += f"Regarding {opinion['event_name']}, my position is {opinion['opinion']}. '\n'"
-
+        # 这个地方返回的是一个列表[Dict, Dict]
+        # relevant_opinion_list = self.core_agent.recollect(query=discuss_topic, retrieve_type="opinion",
+        #                                                   retrieve_count=3)
+        # # TODO 对观点相关性的过滤需要进行修改
+        # relevant_opinion_list = [op for op in relevant_opinion_list if op["relevance"] > 0]
+        # if len(relevant_opinion_list) == 0:
+        #     relevant_opinions = f"In reference to {discuss_topic}, I held no pre-existing opinions."
+        # else:
+        #     relevant_opinions = f"In reference to {discuss_topic}, I held {len(relevant_opinion_list)} related pre-existing opinions. '\n'"
+        #     for opinion in relevant_opinion_list:
+        #         relevant_opinions += f"Regarding {opinion['topic_name']}, my position is {opinion['opinion']}. '\n'"
+        #
         relevant_relations = ""
         for other_agent in self.current_agents:
             relevant_relation = self.core_agent.relationship_with_others(other_agent.name)
@@ -115,6 +159,7 @@ class DiscussionGroup(BaseGroup):
             else:
                 relevant_relations += f"My relationship with {other_agent.name} can be characterized as {relevant_relation['relationship']}, the details of which include {relevant_relation['description']}. On a comprehensive intimacy scale that peaks at 10, our level of closeness stands at {relevant_relation['closeness']}.'\n'"
 
+        relevant_opinions = self.core_agent.memory.opinions
         consensus_prompt = f"""
         Within a team, you, in collaboration with {self.current_agents}, are engaging in discussions regarding {discuss_topic}. 
         Your stance is encapsulated in {relevant_opinions}.
@@ -123,7 +168,7 @@ class DiscussionGroup(BaseGroup):
         Please distill the consensus reached during the discussion and highlight the point that aligns most closely with your thoughts on {discuss_topic}. If no such consensus is found, respond with "None".
         Please express it in JSON format, specifically as such:
         {
-            "consensus": ""
+        "consensus": ""
         }
         """
         return self.core_agent.task_react(consensus_prompt, json_mode=True)["consensus"]
@@ -134,5 +179,3 @@ class DiscussionGroup(BaseGroup):
 #       1. 构建 针对 opinion，relation，memory 的 retrieve
 #       2. 构建 refresh agent prompt
 #       3. 构建 JSON Load & Save 方法，先做 Load 再做 Save
-
-# 参考 Camel Role Play 代码 + Humanoid Agent代码

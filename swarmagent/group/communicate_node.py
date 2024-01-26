@@ -1,14 +1,22 @@
-from group import BaseGroup
+from .group import BaseGroup
 from typing import List
 from ..agent.agent import Agent
 
 
 class CommunicateNode(BaseGroup):
-    def __init__(self, name: str, description: str, agent_list: List[Agent]):
-        super().__init__(name, description, agent_list)
+    def __init__(self, name: str, agent_list: List[Agent], storage_path: str, description: str = '',
+                 curr_agent: List[Agent] = []):
+        super().__init__(group_name=name, agent_list=agent_list, description=description, storage_path=storage_path,
+                         curr_agents=curr_agent)
         pass
 
     def run(self):
+        pass
+
+    def load(self):
+        pass
+
+    def save(self):
         pass
 
     def communicate(self):

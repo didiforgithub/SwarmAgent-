@@ -1,3 +1,16 @@
 {
-  "name": "Community Simulation"
+  "name": "Community Simulation",
+  "simulation_topic": "A社区摆摊卖菜争议事件",
+  "decision_group_counts": 3,
+  "group2agent": {
+    "居民":["安娜","林先生","张亮"],
+    "社居委":["晓华","李四"],
+    "摆摊卖菜者":["小磊","王明"]
+  },
+  "current_step": "1-1",
+  "agent_counts": 7,
+  "day_rounds": 6,
+  "agent_list": ["安娜", "林先⽣", "张亮", "小磊", "王明", "晓华", "李四"],
+  "discussion_groups": ["居民", "社居委", "摆摊卖菜者"],
+  "communicate_nodes": ["林先生与安娜的家庭"]
 }

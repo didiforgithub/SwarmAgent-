@@ -8,6 +8,7 @@ import json
 from typing import Dict
 from ..utils.caculate import cos_sim
 
+
 class Memory:
     def __init__(self, storage_path: str):
         """
@@ -58,7 +59,7 @@ class Memory:
         self.summaries: Dict = {}  # 对近期会话的总结性记忆，进行检索时会出现较低的失忆情况
         self.summaries_embeddings: Dict = {}
         self.opinions: Dict = {}  # LIST[Dict]，存储对某件事的观点，进行检索时会出现较低的失忆情况
-        self.opinions_embeddings: Dict = {}
+        self.opinions_embeddings: Dict = {}     # {topic_name: opinion_embedding}
         self.relationships: Dict = {}  # LIST[DICT] 存储与某个人的关系，不会出现任何失忆状况
         self.plan_history: Dict = {}  # 存储过去的Plan信息，记忆在什么时候去过什么地方
         self.load()
@@ -97,12 +98,12 @@ class Memory:
 
     def retrieve_opinion(self, query_embedding: str):
         """
-        针对opinions的记忆检索，较低概率出现失忆事件
+        针对opinions的记忆检索，不会出现失忆事件
         """
         # 遍历opinions，获取其embedding
         opinion_out = dict()
-        for opinion_name, opinion_embedding in self.opinions_embeddings.items():
-            opinion_out[opinion_name] = cos_sim(opinion_embedding, query_embedding)
+        for topic_name, opinion_embedding in self.opinions_embeddings.items():
+            opinion_out[topic_name] = cos_sim(opinion_embedding, query_embedding)
         return opinion_out
 
     def retrieve_summaries(self, content):
@@ -110,6 +111,7 @@ class Memory:
         针对conversation_history的记忆检索，较高概率出现失忆事件
         失忆事件触发
         """
+
         pass
 
     def add_summaries(self, content):

@@ -13,6 +13,7 @@
 
 
 """
+import os
 from typing import List
 from swarmagent.engine.llm_engine import OpenAILLM, prompt_load
 from swarmagent.agent.singleagent import Agent
@@ -158,14 +159,10 @@ class Group:
 
 
 class BaseGroup:
-    def __init__(self, group_name: str, description: str, agent_list: List[Agent], curr_agents: List[Agent] = None):
+    def __init__(self, group_name: str, agent_list: List[Agent], storage_path: str, description: str = '', curr_agents: List[Agent] = None):
         self.name = group_name
         self.description = description
         self.group_memory = []
         self.members = agent_list          # Group 成员
         self.current_agents = curr_agents  # Group 当前时间步上的成员
-
-        """
-        这里需要具体想清楚Group的共有属性
-        """
-        pass
+        self.storage_path = os.path.join(storage_path,self.name)
