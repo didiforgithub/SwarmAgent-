@@ -94,6 +94,7 @@ class Environment:
 
             # TODO 初始化 Info Group 信息
             for com_node_name in env_dict["communicate_nodes"]:
+
                 pass
 
     def save(self):

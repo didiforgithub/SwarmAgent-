@@ -68,7 +68,7 @@ class DiscussionGroup(BaseGroup):
             - 由该轮次的Core Agent 决定是否讨论，如果讨论，围绕什么话题进行讨论；
                 - 这里会提供之前围绕什么话题进行的讨论，与上次讨论的概括，考虑要不要继续讨论
         - 讨论启动
-            - Config 对每个时间步里面开启讨论的Group行动轮次进行配置
+            - config 对每个时间步里面开启讨论的Group行动轮次进行配置
             - 进行复杂的Action循环，怎么组织其中Agent的决策Action是个问题
         - 讨论结束
             - 对 Agent 状态进行更新
@@ -173,9 +173,13 @@ class DiscussionGroup(BaseGroup):
         """
         return self.core_agent.task_react(consensus_prompt, json_mode=True)["consensus"]
 
-# TODO 下一步工作，完善react代码，思考一个合适的Prompt让人类做出反应
 
-# 1.20 TODO
+# 1.20 TODO ? Forget Implement ?
 #       1. 构建 针对 opinion，relation，memory 的 retrieve
 #       2. 构建 refresh agent prompt
 #       3. 构建 JSON Load & Save 方法，先做 Load 再做 Save
+
+# 2.16 TODO How To Restart SwarmAgent
+#       [ ] 1. Test for the discussion_group
+#       [ ] 2. Test for the agent memory & init_act
+#       [ ] 3. Test for the
