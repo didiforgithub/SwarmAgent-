@@ -1,0 +1,4 @@
+openai==1.13.3
+Pillow==10.1.0
+webcolors==1.13
+yarl==1.9.4
