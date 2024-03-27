@@ -18,6 +18,7 @@ class Memory:
             summaries: {
                 'id':{
                     'group': '<event group>',
+                    'name': '<event name>'
                     'content': '<event summart content>'
                 },
             },
@@ -50,7 +51,7 @@ class Memory:
         self.summaries: Dict = {}  # 对近期会话的总结性记忆，进行检索时会出现较低的失忆情况
         self.summaries_embeddings: Dict = {}
         self.opinions: Dict = {}  # LIST[Dict]，存储对某件事的观点，进行检索时会出现较低的失忆情况
-        self.opinions_embeddings: Dict = {}  # {topic_name: opinion_embedding}
+        self.opinions_embeddings: Dict = {}  # 这里应该是对topic做embeddding吧
         self.relationships: Dict = {}  # LIST[DICT] 存储与某个人的关系，不会出现任何失忆状况
         self.plan_history: Dict = {}  # 存储过去的Plan信息，记忆在什么时候去过什么地方
         self.load()
@@ -90,14 +91,21 @@ class Memory:
         save_json("opinion_embeddings", self.opinions_embeddings)
         save_json("summary_embeddings", self.summaries_embeddings)
 
+    @property
+    def get_events(self):
+        events = []
+        for event_id, content  in self.summaries.items():
+            events.append({"name":content['name'], "event_id":event_id})
+        return events
+
     def retrieve_opinion(self, query_embedding: str):
         """
-        针对opinions的记忆检索，不会出现失忆事件
+        retrieve based on opinion's topic name embedding
         """
         # 遍历opinions，获取其embedding
         opinion_out = dict()
-        for topic_name, opinion_embedding in self.opinions_embeddings.items():
-            opinion_out[topic_name] = cos_sim(opinion_embedding, query_embedding)
+        for opinion_id, topic_embedding in self.opinions_embeddings.items():
+            opinion_out[opinion_id] = cos_sim(topic_embedding, query_embedding)
         return opinion_out
 
     def retrieve_summaries(self, content):

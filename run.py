@@ -29,16 +29,16 @@ version_name = args["version_name"]
 
 
 def auto_config(idea:str, version_name:str, update_rule:str="BEST", agent_count:int=3, intervene:bool = False):
-    desc, topic, agent_list = dynamic_generator.generate(idea, int(agent_count))
+    name, desc, topic, agent_list = dynamic_generator.generate(idea, int(agent_count))
     dynamic_generator.local_save(desc, topic, agent_list, version_name)
-    simulation_env = ComGroup(members=agent_list, description=desc, strategy=update_rule)
+    simulation_env = ComGroup(name=name, members=agent_list, description=desc, strategy=update_rule)
     result = simulation_env.run(idea=topic, intervene=intervene)
     return result
 
 
 def load_config(version_name:str, update_rule:str="BEST", intervene:bool=False):
-    desc, topic, agent_list = dynamic_generator.local_load(version_name)
-    simulation_env = ComGroup(members=agent_list, description=desc, strategy=update_rule)
+    name, desc, topic, agent_list = dynamic_generator.local_load(version_name)
+    simulation_env = ComGroup(name=name, members=agent_list, description=desc, strategy=update_rule)
     result = simulation_env.run(idea=topic, intervene=intervene)
     return result
 

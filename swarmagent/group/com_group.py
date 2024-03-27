@@ -8,12 +8,14 @@ from swarmagent.engine.llm_engine import OpenAILLM
 from swarmagent.agent.agent import Agent
 from swarmagent.utils.tool import human_display  
 from swarmagent.prompt.group_prompt import CONCLUSION_PROMPT
+from swarmagent.utils.logger import logger
 from typing import List
 
 
 class ComGroup:
 
-    def __init__(self, members: List[Agent], description: str, strategy: str = "BEST"):
+    def __init__(self, name:str, members: List[Agent], description: str, strategy: str = "BEST"):
+        self.name = name
         self.members = members
         self.description = description
         self.strategy = strategy
@@ -31,6 +33,8 @@ class ComGroup:
         self.cur_idea = idea
         debate_history = [[f"Situation:{self.description}", f"Topic: {idea}"]]
         debate_conclusion_history = []
+
+        # By parameter intervene, you can choose whether to intervene in the debate.
         if intervene:
             intervene_role = input("Please enter into intervene role:")
             while rounds != 0:
@@ -42,7 +46,6 @@ class ComGroup:
                 intervene = input("Please enter intervene")
                 debate_history[-1].append(f"{intervene_role}: {intervene}")
                 rounds -= 1
-            return debate_history
         else:
             while rounds != 0:
                 result = self.debate(chat_history=debate_history, conclusion_history=debate_conclusion_history)
@@ -51,7 +54,11 @@ class ComGroup:
                     break
                 human_display(result['history'][-1])
                 rounds -= 1
-            return debate_history
+        
+        # After finish debate, every agent need to update their memory by conclude the debate.
+        for member in self.members:
+            member.event_conclusion(group=self.name, topic=self.cur_idea, conclusion_message=debate_conclusion_history)
+        return debate_history
 
     def debate(self, chat_history: List[List[str]], conclusion_history: List[str]):
         """

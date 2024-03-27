@@ -28,17 +28,22 @@ message format: {{"topic":"<topic name>", "opinion":"<your opinion>"}}
 
 relationship_modification:
 description: If the ongoing information influences your relationship with someone, invoke this action. This will allow you to adjust the relational details stored in your memory. You can adjust three facets within an interpersonal relationship: the definition of the relationship, your perception of the interlocutor, and the degree of closeness with the interlocutor (expressed on a scale from 0 to 10, where a higher score indicates greater intimacy). Within a single interaction, you have the option to modify your relationship with multiple interlocutors.。
-message format: {{"relationships":[{{"name":"<character A>", "relationship":"<>", "description":"<>", "closeness":<>}},{{"name":"<character A>", "relationship":"<>", "description":"<>", "closeness":<>}}]}}
+message format: [{{"name":"<character A>", "relationship":"<>", "description":"<>", "closeness":<>}},{{"name":"<character A>", "relationship":"<>", "description":"<>", "closeness":<>}}]
 
-summary_modification:
+event_recollect:
+description: If the ongoing information make you think of some past events, you can use this action to recall the past events's detailed sumamry.
+message format: {{"event_id":"<event id>"}}
+
+event_summary_modification:
 description: If the provided information is likely to impact your previous recollections on certain events, use this action to reaccess your stored summary and make modifications.
-message format: {{"reason":"<explain why you think the current info could affect your prior event summaries>"}}
+message format: {{"event_id":<event_id>, "reason":"<explain why you think the current info could affect your prior event summaries and how you will change the summary>"}}
 
 At present, the information you are processing is {current_round_message}. 
 
 Summary of past conversations in this scene is indicated as {message_conclusions}, 
 with potentially relevant opinion shows below: {retrieved_opinions}.
 And any relationships with the speaker referred to as {retrieved_relationships}.
+Before the conversation in this scene, you have experienced these events {past_events}, the detailed information you recall about these events is {recollect_event}
 Kindly choose one of the aforementioned response modes and output in JSON format. 
 For instance:
 {{
@@ -47,6 +52,15 @@ For instance:
 }}
 
 """
+EVENT_CONCLUSION_PROMPT = """
+Summarize the events occurring within the {group} from your perspective, relating to the opinion of {retrieved_opinion}. 
+The dialogue during these events is summarized as {message_conclusion}. 
+Please frame your conclusion on this event and devise a title, along with a summary context. Return these contents in JSON format:
+{{
+    "name":<event name>,
+    "content":<summary context>
+}}
+"""
 
 RELATION_DESC = """
 Your relationship with {name} is {relationship}. Your impression of him is {desc}. Your closeness to him is {closeness}
@@ -54,4 +68,8 @@ Your relationship with {name} is {relationship}. Your impression of him is {desc
 
 OPINION_DESC = """
 You have an opinion on {topic} that {opinion}, 这一观点与当前讨论的观点的语义相关性为{relevance}
+"""
+
+EVENT_DESC = """
+{event_id}: {event_name} occurred in {group}, the summary of the event is{event_content}.
 """

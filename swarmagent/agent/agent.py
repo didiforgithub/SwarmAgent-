@@ -4,13 +4,14 @@
 # email      : didi4goooogle@gmail.com
 # Description: Agent architecture
 
+import re
 import os
 import json
 from typing import List
 from swarmagent.agent.strategy import UpdateRule
 from swarmagent.agent.memory import Memory
 from swarmagent.engine.llm_engine import OpenAILLM
-from swarmagent.prompt.agent_prompt import REAL_ACT_PROMPT, RELATION_DESC, OPINION_DESC 
+from swarmagent.prompt.agent_prompt import REAL_ACT_PROMPT, EVENT_CONCLUSION_PROMPT, RELATION_DESC, OPINION_DESC, EVENT_DESC
 from swarmagent.utils.caculate import top_highest_x_values
 from swarmagent.utils.tool import round_chat_parse
 from swarmagent.utils.logger import logger
@@ -30,6 +31,7 @@ class Agent:
         self.summary_memory_loss = 0.95
         self.conversation_memory_loss = 0.8
 
+        self.event_recollect = ""
         self.llm = OpenAILLM()
         if storage_path != "":
             self.storage_path = os.path.join(storage_path, self.name)
@@ -120,7 +122,7 @@ class Agent:
         return com_result
 
     def react(self, chat_history: List[List[str]], strategy: str, situation: str = "", topic: str = "",
-              message_conclusion: List[str] = "", ):
+              message_conclusion: List[str] = "",recollect_event: List[str] = ""):
         """
         Core Function, You shoule refine this function with memgpt's code
         """
@@ -139,31 +141,42 @@ class Agent:
                                                  message_conclusions=message_conclusion,
                                                  retrieved_relationships=retrieved_relationships,
                                                  retrieved_opinions=retrieved_opinions,
+                                                 past_events=self.memory.get_events,recollect_event=self.event_recollect,
                                                  current_round_message=round_chat_content)
-        logger.save(f"{self.name}'s real_act prompt: {real_act_prompt}")
-        real_act_result = self.llm.get_response(prompt=real_act_prompt, json_mode=True)
+        logger.console_save(f"{self.name}'s real_act prompt: {real_act_prompt}")
+        real_act_result = self.basic_role_play_response(prompt=real_act_prompt, json_mode=True)
         action = real_act_result["function"]
-
+        logger.agent_save(real_act_result, self.name)
         # After get the real_act_result, we need to do some post-processing. Such as modify memory or just return the result.
-        # 所有的return 都是字符串，如果进行了engage之外的动作，就进行
         if action == "engage_in_dialogue":
-            return real_act_result["content"]
+            return real_act_result["message"]
         else:
+            real_act_content = real_act_result["message"]
             if action == "maintain_status":
                 pass
-            elif action == "perspective_adjustment":
-                real_act_result["opinion_id"]
-                real_act_result["opinion"]
-                # TODO 在memory地方存在疑问
-                self.memory.opinions[real_act_result["opinion_id"]] = real_act_result["opinion"]
-                # 这里需要重新获取embedding数据
-                pass
-            elif action == "perspective_formulate":
-                pass
+            elif action == "perspective_adjustment": 
+                self.memory.opinions[real_act_content["opinion_id"]]["opinion"] = real_act_content["opinion"]
+            elif action == "perspective_formulate": 
+                opinion_id = len(self.memory.opinions)+1
+                self.memory.opinions[opinion_id] = {"topic": real_act_content["topic"], "opinion": real_act_content["opinion"]}
+                self.memory.opinions_embeddings[opinion_id] = self.llm.get_embeddings(real_act_content["topic"])
             elif action == "relationship_modification":
-                pass
-            elif action == "summary_modification":
-                pass
+                for relation_modified in real_act_content:
+                    relation_modified_name = relation_modified["name"]
+                    fields = ["relationship", "description", "closeness"]
+                    self.memory.relationships[relation_modified_name] = {field: relation_modified[field] for field in fields}
+            elif action == "event_recollect":
+                event = self.memory.summaries[real_act_content["event_id"]]
+                event_desc = EVENT_DESC.format(event_id=real_act_content["event_id"], event_name=event["name"], group=event["group"], event_content=event["content"])
+                self.event_recollect += f"{event_desc} + \n"
+            elif action == "event_summary_modification":
+                event = self.memory.summaries[real_act_content["event_id"]]
+                event["content"] += real_act_content["reason"]
+                # Remove the recollect content before the modification
+                pattern = re.compile(r'{}.*\n?'.format(re.escape(f"{real_act_content["event_id"]}:")), re.M)
+                self.event_recollect = pattern.sub("", self.event_recollect)
+                event_desc = EVENT_DESC.format(event_id=real_act_content["event_id"], event_name=event["name"], group=event["group"], event_content=event["content"])
+                self.event_recollect += event_desc
             return f"{self.name} is lost in thought and has not responded for a while."
 
     def arxiv(self):
@@ -194,6 +207,22 @@ class Agent:
 
         pass
 
+
+    def event_conclusion(self, group:str, topic:str, conclusion_message:List[str]):
+        """
+        Agent 对事件进行总结
+        """
+        retrieved_opinions = self.recollect(query=topic, retrieve_type="opinion")
+        retrieved_opinions = OPINION_DESC.format(topic=retrieved_opinions["topic"],opinion=retrieved_opinions["opinion"],relevance=retrieved_opinions["relevance"])
+        event_conclusion_prompt = EVENT_CONCLUSION_PROMPT.format(group=group, retrieved_opinion=retrieved_opinions,message_conclusion=conclusion_message)
+        event_conclusion_result = self.basic_role_play_response(prompt=event_conclusion_prompt, json_mode=True)
+        event_id = len(self.memory.summaries) + 1
+        self.memory.summaries[event_id] = {
+            "group": group,
+            'name': event_conclusion_result["name"],
+            'content': event_conclusion_result["content"]
+        }
+
     def recollect(self, query: str, retrieve_type: str, retrieve_count=3):
         """
         Agent 的回忆 action
@@ -213,7 +242,7 @@ class Agent:
             try:
                 for k, v in recollect_result.items():
                     recollect_result_list.append(
-                        {"topic": k, "opinion": self.memory.opinions[k]['opinion'], "relevance": v})
+                        {"topic": self.memory.opinions[k]["topic"], "opinion": self.memory.opinions[k]['opinion'], "relevance": v})
             except KeyError:
                 recollect_result_list = []
             return recollect_result_list

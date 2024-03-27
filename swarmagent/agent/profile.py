@@ -49,7 +49,7 @@ class DynamicConfigurator:
         """
         基于用户{idea} 生成一个场景的{desc}，与这个场景中讨论的{topic}，并生成对应数量的agent
         """
-        desc, topic = self.desc_topic_generate(idea)
+        name, desc, topic = self.desc_topic_generate(idea)
         agent_list = self.agent_generate(desc, topic, agent_counts)
         return desc, topic, agent_list
 
@@ -58,12 +58,13 @@ class DynamicConfigurator:
         Create a fitting scene description based on the user-provided {idea}, 
         along with the topic discussed in this scenario. The result should be returned in JSON format.
         {{
+            "group_name":"",
             "desc":"",
             "topic":""
         }}
         """
         desc_topic_result = self.llm.get_response(prompt=desc_topic_generate_prompt, json_mode=True)
-        return desc_topic_result['desc'], desc_topic_result['topic']
+        return desc_topic_result['group_name'], desc_topic_result['desc'], desc_topic_result['topic']
 
     def agent_generate(self, desc: str, topic: str, agent_counts):
         agent_generate_prompt = f"""
