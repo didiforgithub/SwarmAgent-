@@ -6,7 +6,8 @@
 
 from swarmagent.engine.llm_engine import OpenAILLM
 from swarmagent.agent.agent import Agent
-from swarmagent.utils.tool import human_display  # 将history可视化成为人类容易理解的格式
+from swarmagent.utils.tool import human_display  
+from swarmagent.prompt.group_prompt import CONCLUSION_PROMPT
 from typing import List
 
 
@@ -19,13 +20,21 @@ class ComGroup:
         self.cur_idea = None
         self.llm = OpenAILLM()
 
+    @property
+    def get_members(self):
+        members_list = []
+        for member in self.members:
+            members_list.append(member.name)
+        return members_list
+
     def run(self, idea: str, intervene: bool = False, rounds: int = 20) -> List[List[str]]:
         self.cur_idea = idea
         debate_history = [[f"Situation:{self.description}", f"Topic: {idea}"]]
+        debate_conclusion_history = []
         if intervene:
             intervene_role = input("Please enter into intervene role:")
             while rounds != 0:
-                result = self.debate(history=debate_history)
+                result = self.debate(chat_history=debate_history, conclusion_history=debate_conclusion_history)
                 debate_history = result["history"]
                 if result['status'] == "consensus":
                     break
@@ -36,7 +45,7 @@ class ComGroup:
             return debate_history
         else:
             while rounds != 0:
-                result = self.debate(history=debate_history)
+                result = self.debate(chat_history=debate_history, conclusion_history=debate_conclusion_history)
                 debate_history = result["history"]
                 if result['status'] == "consensus":
                     break
@@ -44,14 +53,31 @@ class ComGroup:
                 rounds -= 1
             return debate_history
 
-    def debate(self, history: List[List[str]]):
+    def debate(self, chat_history: List[List[str]], conclusion_history: List[str]):
+        """
+        Group debate function. You can choose agent's react mode here (real_act or com_react)
+        """
+        current_history_conclusion = self.com_group_conclusion(chat_history, conclusion_history)
+        conclusion_history.append(current_history_conclusion)
         current_history = []
         for member in self.members:
-            member_response = member.com_react(situation=self.cur_idea, com_history=history, strategy=self.strategy)
-            current_history.append(f"{member.name}: {member_response}")
-        history.append(current_history)
-        debate_result = {"history": history, 'status': self.judge_debate_result(current_history)}
+            # com_react
+            # member_response = member.com_react(situation=self.cur_idea, com_history=history, strategy=self.strategy)
+            # real react
+            member_response = member.react(chat_history=chat_history, situation=self.description,
+                                           strategy=self.strategy, topic=self.cur_idea,
+                                           message_conclusion=conclusion_history)
+            current_history.append(f"{member.name}:: {member_response}")
+        chat_history.append(current_history)
+        debate_result = {"history": chat_history, 'status': self.judge_debate_result(current_history)}
         return debate_result
+
+    def com_group_conclusion(self, chat_history: List[List[str]], conclusion_history: List[str]):
+        conclusion_prompt = CONCLUSION_PROMPT.format(situation=self.description, members=self.get_members,
+                                                     topic=self.cur_idea, current_chat=chat_history[-1],
+                                                     conclusions_past=conclusion_history)
+        conclusion_result = self.llm.get_response(prompt=conclusion_prompt, json_mode=True)
+        return conclusion_result["conclusion"]
 
     def judge_debate_result(self, current_history):
         judge_prompt = f""" 

@@ -4,9 +4,10 @@
 # email      : didi4goooogle@gmail.com
 # Description: Agent's memory architecture
 
+import os
 import json
 from typing import Dict
-from ..utils.caculate import cos_sim
+from swarmagent.utils.caculate import cos_sim
 
 
 class Memory:
@@ -15,37 +16,27 @@ class Memory:
         MEMORY 格式
         {
             summaries: {
-                ‘event name’: {
-                    'group info': '',
-                    'day time & time-step': '',
-                    'content': ''，
-                    'conversation history'
+                'id':{
+                    'group': '<event group>',
+                    'content': '<event summart content>'
                 },
             },
             opinions: {
-                'topic name': {
-                    'id': '',
-                    'opinion': '',
-                    'reason': {
-                        'description': '',
-                        'relevant summary': []
-                    },
+                'id': {
+                    "topic":"<topic content>",
+                    "opinion":"<opinion content>"
                 }
             },
             relationships: {
                 'agent name': {
-                    ‘relationship’: '',
-                    ‘description’:'',
+                    'relationship': '',
+                    'description':'',
                     'closeness':''
                 }
-            },
-            plan_history:{
-                "day time": LIST [time-step]
             }
         }
 
         MEMORY Embedding JSON 存储
-
         MEMORY 遗忘机制与类型的关系
         1. 无遗忘机制：relationship, plan history, opinions,
         2. 存在遗忘机制：summaries (conversation history)
@@ -59,25 +50,28 @@ class Memory:
         self.summaries: Dict = {}  # 对近期会话的总结性记忆，进行检索时会出现较低的失忆情况
         self.summaries_embeddings: Dict = {}
         self.opinions: Dict = {}  # LIST[Dict]，存储对某件事的观点，进行检索时会出现较低的失忆情况
-        self.opinions_embeddings: Dict = {}     # {topic_name: opinion_embedding}
+        self.opinions_embeddings: Dict = {}  # {topic_name: opinion_embedding}
         self.relationships: Dict = {}  # LIST[DICT] 存储与某个人的关系，不会出现任何失忆状况
         self.plan_history: Dict = {}  # 存储过去的Plan信息，记忆在什么时候去过什么地方
         self.load()
 
     def load(self):
-        # 加载JSON格式的Memory
-        # storage_path: Env_name/agent/agent_name/memory.json
+        # storage_path: Env_name/agent_name/memory.json
         def load_json(file_name, default_value):
+            json_path = os.path.join(self.storage_path, f"{file_name}.json")
+            os.mkdir(json_path, exist_ok=True)
             try:
-                with open(self.storage_path + f"/{file_name}.json", 'r') as json_file:
+                with open(json_path, 'r') as json_file:
                     return json.load(json_file)
-            except FileNotFoundError:
+            except:
                 return default_value
+
         memory_file = load_json("memory", {})
         self.opinions = memory_file.get("opinions", {})
         self.summaries = memory_file.get("summaries", {})
         self.relationships = memory_file.get("relationships", {})
         self.plan_history = memory_file.get("plan_history", {})
+        # 加载embedding 时，使用 {id: <embeddings>} 对应方式获取 embedding 值
         self.opinions_embeddings = load_json("opinion_embeddings", {})
         self.summaries_embeddings = load_json("summary_embeddings", {})
 
@@ -117,12 +111,12 @@ class Memory:
     def add_summaries(self, content):
         pass
 
-    def summary(self, chat_snippet: []):
-        """
-        引入Summary机制，针对近期发生的事件进行总结，随后添加到summaries中
-        """
-        result = chat_snippet
-        self.add_summaries(result)
+    # def summary(self, chat_snippet: []):
+    #     """
+    #     引入Summary机制，针对近期发生的事件进行总结，随后添加到summaries中
+    #     """
+    #     result = chat_snippet
+    #     self.add_summaries(result)
 
     def criticize(self):
         """

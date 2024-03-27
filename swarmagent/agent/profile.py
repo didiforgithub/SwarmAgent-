@@ -7,13 +7,15 @@ import os
 import json
 from swarmagent.engine.llm_engine import OpenAILLM
 from swarmagent.agent.agent import Agent
+from swarmagent.config.config import load_config
 
+configs = load_config()
 
 class DynamicConfigurator:
 
     def __init__(self):
         self.name = "DynamicConfigurator"
-        self.role = "基于用户要求个性化定制模拟场景与agent"
+        self.role = "Customized simulation scenarios and agents based on user requirements"
         self.llm = OpenAILLM(model="gpt-4-turbo-preview")
 
     @staticmethod
@@ -76,8 +78,8 @@ class DynamicConfigurator:
         agent_list = []
         agent_result = self.llm.get_response(prompt=agent_generate_prompt, json_mode=True)
         for agent in agent_result["agents"]:
-            agent= {key.lower(): value for key, value in agent.items()}
-            cur_agent = Agent(name=agent['name'], profile=agent)
+            agent = {key.lower(): value for key, value in agent.items()}
+            cur_agent = Agent(name=agent['name'], profile=agent, storage_path=configs["ENV_PATH"])
             agent_list.append(cur_agent)
         return agent_list
 
@@ -115,7 +117,7 @@ humanoid_agent_profile = {
 }
 
 swarm_agent_profile = {
-    "name":"Nick",
+    "name": "Nick",
     "traits": ["friendly", "outgoing", "hospitable"],
     "age": 19,
     "gender": "female",

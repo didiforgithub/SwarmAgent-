@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# Date       : 2023/3/25
+# Date       : 2023/3/8
 # Author     : Jiayi Zhang
 # email      : didi4goooogle@gmail.com
-# Description: Run SwarmAgent Version 0.2 (realact chat)
+# Description: Run SwarmAgent Version 0.1 (com_group chat)
 import os
 import json
 import argparse
@@ -29,6 +29,7 @@ version_name = args["version_name"]
 
 
 def auto_config(idea:str, version_name:str, update_rule:str="BEST", agent_count:int=3, intervene:bool = False):
+
     desc, topic, agent_list = dynamic_generator.generate(idea, int(agent_count))
     dynamic_generator.local_save(desc, topic, agent_list, version_name)
     simulation_env = ComGroup(members=agent_list, description=desc, strategy=update_rule)
@@ -41,12 +42,6 @@ def load_config(version_name:str, update_rule:str="BEST", intervene:bool=False):
     simulation_env = ComGroup(members=agent_list, description=desc, strategy=update_rule)
     result = simulation_env.run(idea=topic, intervene=intervene)
     return result
-
-def env_init():
-    """
-    初始化路径，这个点是不是应该在agent init地方来处理？
-    """
-    pass
 
 
 if __name__ == "__main__":
