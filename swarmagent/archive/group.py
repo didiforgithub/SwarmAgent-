@@ -16,7 +16,7 @@
 import os
 from typing import List
 from swarmagent.engine.llm_engine import OpenAILLM, prompt_load
-from swarmagent.agent.singleagent import Agent
+from swarmagent.archive.singleagent import Agent
 
 
 class Group:

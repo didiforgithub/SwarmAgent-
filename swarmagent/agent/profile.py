@@ -8,6 +8,7 @@ import json
 from swarmagent.engine.llm_engine import OpenAILLM
 from swarmagent.agent.agent import Agent
 from swarmagent.config.config import load_config
+from swarmagent.prompt.generate_prompt import environment_generate_prompt, agent_generate_prompt
 
 configs = load_config()
 
@@ -17,6 +18,7 @@ class DynamicConfigurator:
         self.name = "DynamicConfigurator"
         self.role = "Customized simulation scenarios and agents based on user requirements"
         self.llm = OpenAILLM(model="gpt-4-turbo-preview")
+
 
     @staticmethod
     def local_save(desc, topic, agent_list, version_name):
@@ -44,15 +46,42 @@ class DynamicConfigurator:
             cur_agent = Agent(name=name, storage_path=load_path)
             agent_list.append(cur_agent)
         return desc, topic, agent_list
+    
+    def env_generate(self, idea: str, agent_counts, group_count):
+        """
+        
+        """
+        env_name, env_desc, env_topic, group_list = self.env_desc_generate(idea, group_count)
+        env_total_desc = f"环境名称：{env_name}。环境描述：{env_desc}。环境的主要话题：{env_topic}。"
+        group_desc_total = f"群体信息："
+        for group in group_list:
+            group_desc_total += f"{group['group_name']}：{group['desc']}。"
+        group_agent_dict = self.env_agent_generate(agent_counts, env_total_desc, group_desc_total)
+        # TODO 这里需要完成智能体的人际关系检查，从而完成智能体的社交关系检查
+        # TODO 思考环境生成，是否要固定一下环境中必须的资源，比如说食物，水，空气等等/这个是可以由Generator生成的
+        # TODO 这里先不管智能体的人际关系生成了
+        
+        pass
 
-    def generate(self, idea: str, agent_counts: int):
+    def env_desc_generate(self, idea:str, group_count:int):
+        """
+        生成环境名称，描述，话题，以及初始Group的描述
+        """
+        result = self.llm.get_response(prompt=environment_generate_prompt.format(idea=idea, agent_count=group_count), json_mode=True)
+        return result["environment_name"], result["environment_desc"], result["environment_topic"], result["group_desc"]
+    
+    def env_agent_generate(self, agent_count:int, env_desc_total:str, group_desc_total:str):
+        result = self.llm.get_response(prompt=agent_generate_prompt.format(agent_count=agent_count, env_desc_total=env_desc_total, group_desc_total=group_desc_total), json_mode=True)
+        return result
+    
+    def group_generate(self, idea: str, agent_counts: int):
         """
         基于用户{idea} 生成一个场景的{desc}，与这个场景中讨论的{topic}，并生成对应数量的agent
         """
         name, desc, topic = self.desc_topic_generate(idea)
         agent_list = self.agent_generate(desc, topic, agent_counts)
         return desc, topic, agent_list
-
+    
     def desc_topic_generate(self, idea: str):
         desc_topic_generate_prompt = f"""
         Create a fitting scene description based on the user-provided {idea}, 
@@ -85,39 +114,9 @@ class DynamicConfigurator:
         return agent_list
 
 
-humanoid_agent_profile = {
-    "name": "Eddy Lin",
-    "description": [
-        "Eddy Lin is a student at Oak Hill College studying music theory and composition",
-        "Eddy Lin loves to explore different musical styles and is always looking for ways to expand his knowledge",
-        "Eddy Lin is working on a composition project for his college class",
-        "Eddy Lin is also taking classes to learn more about music theory",
-        "Eddy Lin is living with his father, John Lin who is a pharmacy shopkeeper and Mei Lin, who is a college professor",
-        "Eddy Lin and Monica Moreno are neigbours, friends and also classmates in college",
-        "Eddy Lin thinks Monica Moreno is attractive and interesting",
-        "Eddy Lin knows the Moreno family (Monica Moreno and her parents - Tom Moreno and Jane Moreno) and hangs out at their place sometimes",
-        "Eddy Lin has good friends Tim Nguyen and Tom Dick since a young age",
-        "Eddy Lin's ambition is to have his composition performed at Manhattan's Carnegie Hall someday"
-    ],
-    "example_day_plan": [
-        "8:00 am: wake up and complete the morning routine",
-        "10:00 am: go to Oak Hill College to take classes",
-        "12:00 am: have quick lunch at campus cafe",
-        "1:00 pm: work on new music composition",
-        "5:00 pm: head back home",
-        "7:00 pm: finish school assignments",
-        "8:00 pm: have dinner with family",
-        "9:00 pm: watch a movie with his father, John",
-        "11:00 pm: get ready for bed"
-    ],
-    "age": 19,
-    "traits": ["friendly", "outgoing", "hospitable"],
-    "social_relationships": {
-        "John Lin": {"relationship": "father", "closeness": 5}
-    }
-}
 
 swarm_agent_profile = {
+
     "name": "Nick",
     "traits": ["friendly", "outgoing", "hospitable"],
     "age": 19,

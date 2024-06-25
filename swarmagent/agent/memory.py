@@ -43,11 +43,10 @@ class Memory:
         2. 存在遗忘机制：summaries (conversation history)
             1. opinions 不会受到时间影响，只会受到事实影响，因此 opinions实际上在检索过程中不会存在遗忘的情况
             2. summaries 受到时间影响，会出现低概率的遗忘
-            3. conversation history 受到时间影响，会出现高概率的模糊记忆机制
         3. 遗忘机制：在relevance检索的过程中，搜索到TopK 相关的 Summary时会概率性的出现遗忘现象，即在检索之后返回一个 Sorry I just forget.
-        4. 模糊记忆机制：在检索到Summary之后，提取Conversation history时会出现一个遗忘prompt，基于此对conversation进行不同程度的模糊
+        4. 模糊记忆机制：在检索到Summary之后，在提取具体的conversation时会出现一个遗忘prompt，基于此对conversation进行不同程度的模糊
         """
-        self.storage_path = storage_path
+        self.storage_path = os.path.join(storage_path, "memory")
         self.summaries: Dict = {}  # 对近期会话的总结性记忆，进行检索时会出现较低的失忆情况
         self.summaries_embeddings: Dict = {}
         self.opinions: Dict = {}  # LIST[Dict]，存储对某件事的观点，进行检索时会出现较低的失忆情况
@@ -60,7 +59,6 @@ class Memory:
         # storage_path: Env_name/agent_name/memory.json
         def load_json(file_name, default_value):
             json_path = os.path.join(self.storage_path, f"{file_name}.json")
-            os.mkdir(json_path, exist_ok=True)
             try:
                 with open(json_path, 'r') as json_file:
                     return json.load(json_file)
@@ -78,7 +76,9 @@ class Memory:
 
     def save(self):
         def save_json(file_name, data):
-            with open(self.storage_path + f"/{file_name}.json", 'w') as json_file:
+            memory_path = f"{self.storage_path}/" + f"{file_name}.json"
+            os.makedirs(os.path.dirname(memory_path), exist_ok=True)
+            with open(memory_path, 'w') as json_file:
                 json.dump(data, json_file)
 
         memory = {

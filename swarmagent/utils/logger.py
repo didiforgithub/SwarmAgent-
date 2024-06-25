@@ -20,11 +20,25 @@ class logger:
     @staticmethod
     def topic_save(content, topic):
         topic_path = os.path.join(config["RESULT_PATH"], f"{topic}/history.txt")
-        with open(topic_path, "w") as file:
-            file.write(content)
+        directory = os.path.dirname(topic_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        if not os.path.exists(topic_path):
+            with open(topic_path, "w") as file:
+                file.write(content + "\n")
+        else:
+            with open(topic_path, "a") as file:
+                file.write(content)
 
     @staticmethod
     def agent_save(content, name):
         agent_path = os.path.join(config["RESULT_PATH"], f"{name}/action.txt")
-        with open(agent_path, "a") as file:
-            file.write(content + "\n")
+        directory = os.path.dirname(agent_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        if not os.path.exists(agent_path):
+            with open(agent_path, "w") as file:
+                file.write(content + "\n")
+        else:
+            with open(agent_path, "a") as file:
+                file.write(content + "\n")

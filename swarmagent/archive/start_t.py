@@ -3,13 +3,9 @@
 # Author     : Jiayi Zhang
 # email      : didi4goooogle@gmail.com
 # Description: Minimum demo
-import openai
-import os
-import swarmagent.agent.singleagent as singleagent
-import swarmagent.group.group as group
 
-openai.api_key = os.getenv("OPENAI_KEY")
-
+import swarmagent.archive.singleagent as singleagent
+import swarmagent.archive.group as group
 """
 1. Prompt 调整 —— 开场白作为单独的一个Action执行，需要包含所有角色的信息
 2. Prompt 调整 —— 角色背景强调差异与观点
@@ -18,7 +14,7 @@ openai.api_key = os.getenv("OPENAI_KEY")
 ceo_agent = singleagent.Agent(
     name="Dr. Evelyn Harper",
     profile="Chief Executive Officer of CloseAI. A visionary with a Ph.D. in computer science, Dr. Harper played a pivotal role in shaping CloseAI's strategic direction. Known for her strong leadership and innovation-driven mindset. INTJ",
-    innervoice="Supports limited government intervention, emphasizing the importance of industry self-regulation for fostering innovation and maintaining a competitive edge in the global market."
+    innervoice="Does not support government intervention, emphasizing the importance of industry self-regulation for fostering innovation and maintaining a competitive edge in the global market."
 )
 
 cto_agent = singleagent.Agent(
@@ -49,3 +45,6 @@ print(result)
 print("---------------------------------------message history---------------------------------------")
 for i in conference_room.message_history:
     print(i)
+
+# TODO 这里有BUG，innervoice根本没有成为Prmompt
+# TODO 如何设置，能够让LLM坚持自己的观点？

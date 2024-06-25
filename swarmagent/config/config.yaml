@@ -1,3 +1,6 @@
-LOG_PATH: "swarmagent/storgae/log/logger.txt"
-# 添加API key Base url 修改 llm 
-ENV_PATH: "swarmagent/storage/community_simulation"
+LOG_PATH: 
+RESULT_PATH: 
+ENV_PATH: 
+EXP_PATH: 
+OPENAI_API_KEY: 
+BASE_URL: 
