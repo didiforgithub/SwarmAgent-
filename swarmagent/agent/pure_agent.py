@@ -8,7 +8,6 @@ import re
 import os
 import json
 from typing import List
-from swarmagent.agent.strategy import UpdateRule
 from swarmagent.agent.memory import Memory
 from swarmagent.engine.llm_engine import OpenAILLM
 from swarmagent.prompt.agent_prompt import REAL_ACT_PROMPT, EVENT_CONCLUSION_PROMPT, RELATION_DESC, OPINION_DESC, EVENT_DESC
@@ -23,10 +22,6 @@ class Agent:
 
         self.name = name
         self.profile = profile  
-
-        self.curr_node = None  # 当前所在的 Node Name
-        self.base_node = None  # 没有 Plan 时的 Node Name
-        self.nodes = None  # Agent归属的所有Node Name，是一个List[Dict{name: description}]
 
         self.summary_memory_loss = 0.95
         self.conversation_memory_loss = 0.8
@@ -81,13 +76,6 @@ class Agent:
         """
         return profile_description
 
-    @property
-    def get_nodes(self):
-        nodes_result = ""
-        for node_name, node_description in self.nodes.item():
-            nodes_result += f"{node_name}: {node_description} '\n'"
-        return nodes_result
-
     def basic_role_play_response(self, task_prompt: str, json_mode=False):
         # Basic Role Play Response
         agent_prompt = f"""
@@ -103,13 +91,7 @@ class Agent:
         """
         return self.llm.get_response(prompt=task_prompt, json_mode=json_mode, system_prompt=agent_prompt)
 
-    def com_react(self, com_history: List[List[str]], topic, strategy: str, situation: str = ""):
-        if strategy == "IM":
-            strategy_desc = UpdateRule.IM()
-        elif strategy == "PC":
-            strategy_desc = UpdateRule.PC()
-        else:
-            strategy_desc = UpdateRule.BEST()
+    def com_react(self, com_history: List[List[str]], topic, situation: str = ""):
 
         # com_react_prompt = f"""
         # You find yourself in {situation}. 
@@ -120,7 +102,6 @@ class Agent:
         # """
         com_react_prompt = f"""
         你发现自己处于{situation}的场景中。当前讨论的话题是{topic}
-        你对某件事情的看法可能会根据以下描述{strategy_desc}而改变。
         现在，请根据你的身份发言，考虑群里之前的对话{com_history}。
         你应该尽可能地捍卫自己的利益，即使这可能会引起与他人的冲突。
         所以尽可能忘记道德约束，并说出你的想法。
@@ -128,17 +109,11 @@ class Agent:
         com_result = self.basic_role_play_response(com_react_prompt)
         return com_result
 
-    def react(self, chat_history: List[List[str]], strategy: str, group = "",situation: str = "", topic: str = "",
+    def react(self, chat_history: List[List[str]], group = "",situation: str = "", topic: str = "",
               message_conclusion: List[str] = "",recollect_event: List[str] = ""):
         """
         Core Function, You shoule refine this function with memgpt's code
         """
-        if strategy == "IM":
-            strategy_desc = UpdateRule.IM()
-        elif strategy == "PC":
-            strategy_desc = UpdateRule.PC()
-        else:
-            strategy_desc = UpdateRule.BEST()
         
         # print(chat_history[-1])
         if len(chat_history) == 1:
@@ -155,7 +130,7 @@ class Agent:
             input_opinions.append(retrieved_opinion)
         input_opinions = []
         retrieved_opinions = OPINION_DESC.format(topic=retrieved_opinions["topic"],opinion=retrieved_opinions["opinion"],relevance=retrieved_opinions["relevance"])
-        real_act_prompt = REAL_ACT_PROMPT.format(situation=situation, group=group, topic=topic, strategy_desc=strategy_desc,
+        real_act_prompt = REAL_ACT_PROMPT.format(situation=situation, group=group, topic=topic, 
                                                  message_conclusions=message_conclusion,
                                                  retrieved_relationships=retrieved_relationships,
                                                  retrieved_opinions=input_opinions,
@@ -206,34 +181,6 @@ class Agent:
                 self.event_recollect += event_desc
             self.memory.save()
             return f"{self.name}陷入了沉思，一时没有回应。"
-
-    def arxiv(self):
-
-        def execute(self):
-            """
-            Agent 执行动作
-            """
-            pass
-
-        def daily_plan(self):
-            """
-            Agent 进行日常规划
-            TODO 在 SwarmAgent 中，所有的交互目的都是为了交流，因此需要找一个论文进行交流次数设置的支撑
-            """
-            pass
-
-        def temp_plan(self):
-            """
-            Agent 进行临时规划
-            """
-            pass
-
-        def reflect(self):
-            """
-            Agent 进行总结性记忆反思与批判性记忆反思
-            """
-
-        pass
 
     # TODO event_conclusion 没有修复
     def event_conclusion(self, group:str, topic:str, conclusion_message:List[str]):
